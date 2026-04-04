@@ -37,7 +37,7 @@ export default function RootLayout({ children }) {
 
             <footer className="bg-muted/50 py-12">
               <div className="container mx-auto px-4 text-center text-gray-200">
-                <p>Made with 💗 by Vibhas Kumar</p>
+                <p>Made with 💗 by Vibhas (2203139) , Vivek (2203140) , Mayank (2203080)</p>
                 <p>© 2026 VK. All rights reserved.  </p>
               </div>
             </footer>

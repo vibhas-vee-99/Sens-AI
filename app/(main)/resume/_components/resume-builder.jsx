@@ -203,7 +203,7 @@ export default function ResumeBuilder({ initialContent }) {
                   <Input
                     {...register("contactInfo.email")}
                     type="email"
-                    placeholder="your@email.com"
+                    placeholder="johndoe@gmail.com"
                     error={errors.contactInfo?.email}
                   />
                   {errors.contactInfo?.email && (
@@ -217,7 +217,7 @@ export default function ResumeBuilder({ initialContent }) {
                   <Input
                     {...register("contactInfo.mobile")}
                     type="tel"
-                    placeholder="+1 234 567 8900"
+                    placeholder="+91 234 567 8900"
                   />
                   {errors.contactInfo?.mobile && (
                     <p className="text-sm text-red-500">
