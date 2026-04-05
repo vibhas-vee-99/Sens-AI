@@ -23,7 +23,6 @@ import useFetch from "@/hooks/use-fetch";
 import { useUser } from "@clerk/nextjs";
 import { entriesToMarkdown } from "@/app/lib/helper";
 import { resumeSchema } from "@/app/lib/schema";
-import html2pdf from "html2pdf.js/dist/html2pdf.min.js";
 
 export default function ResumeBuilder({ initialContent }) {
   const [activeTab, setActiveTab] = useState("edit");
@@ -112,26 +111,36 @@ export default function ResumeBuilder({ initialContent }) {
 
   const [isGenerating, setIsGenerating] = useState(false);
 
-  const generatePDF = async () => {
+ const generatePDF = async () => {
     setIsGenerating(true);
     try {
-      const element = document.getElementById("resume-pdf");
-      const opt = {
-        margin: [15, 15],
-        filename: "resume.pdf",
-        image: { type: "jpeg", quality: 0.98 },
-        html2canvas: { scale: 2 },
-        jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
-      };
-
-      await html2pdf().set(opt).from(element).save();
+      const printWindow = window.open("", "_blank");
+      printWindow.document.write(`
+        <html>
+          <head>
+            <title>Resume</title>
+            <style>
+              body { font-family: sans-serif; padding: 40px; color: black; background: white; }
+              h1, h2, h3 { color: black; }
+            </style>
+          </head>
+          <body>
+            ${document.getElementById("resume-pdf").innerHTML}
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
+      printWindow.focus();
+      setTimeout(() => {
+        printWindow.print();
+        printWindow.close();
+      }, 500);
     } catch (error) {
       console.error("PDF generation error:", error);
     } finally {
       setIsGenerating(false);
     }
   };
-
   const onSubmit = async (data) => {
     try {
       const formattedContent = previewContent
@@ -401,8 +410,15 @@ export default function ResumeBuilder({ initialContent }) {
               preview={resumeMode}
             />
           </div>
-          <div className="hidden">
-            <div id="resume-pdf">
+          <div style={{ position: "absolute", left: "-9999px", top: 0 }}>
+            <div id="resume-pdf" data-color-mode="light" style={{
+              background: "white",
+              color: "black",
+              fontFamily: "sans-serif",
+              colorScheme: "light",
+              width: "794px",
+              padding: "40px"
+            }}>
               <MDEditor.Markdown
                 source={previewContent}
                 style={{
