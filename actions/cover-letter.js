@@ -45,7 +45,12 @@ export async function generateCoverLetter(data) {
 
   try {
     const result = await model.generateContent(prompt);
-    const content = result.response.text().trim();
+   const content = result.response.text()
+      .trim()
+      .replace(/^```markdown\n?/, "")
+      .replace(/^```\n?/, "")
+      .replace(/```$/, "")
+      .trim();
 
     const coverLetter = await db.coverLetter.create({
       data: {
