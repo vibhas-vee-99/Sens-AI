@@ -25,7 +25,7 @@ export default function PerformanceChart({ assessments }) {
   useEffect(() => {
     if (assessments) {
       const formattedData = assessments.map((assessment) => ({
-        date: format(new Date(assessment.createdAt), "MMM dd"),
+        date: format(new Date(assessment.createdAt), "MMM dd HH:mm"),
         score: assessment.quizScore,
       }));
       setChartData(formattedData);
@@ -43,11 +43,11 @@ export default function PerformanceChart({ assessments }) {
       <CardContent>
         <div className="h-[300px]">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={chartData}>
+            <LineChart data={chartData} margin={{ top: 5, right: 30, left: 0, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="date" />
               <YAxis domain={[0, 100]} />
-              <Tooltip
+           <Tooltip cursor={{ strokeDasharray: "3 3" }}
                 content={({ active, payload }) => {
                   if (active && payload?.length) {
                     return (
@@ -69,6 +69,8 @@ export default function PerformanceChart({ assessments }) {
                 dataKey="score"
                 stroke="#6366f1"
                 strokeWidth={2}
+                dot={{ r: 4 }}
+                activeDot={{ r: 6 }}
               />
             </LineChart>
           </ResponsiveContainer>
