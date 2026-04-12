@@ -3,11 +3,11 @@ import Image from "next/image";
 import Link from "next/link";
 import React from "react";
 import { Button } from "./ui/button";
-import { ChevronDown, FileText, GraduationCap, LayoutDashboard, PenBox, StarsIcon } from "lucide-react";
+import { ChevronDown, FileText, GraduationCap, LayoutDashboard, PenBox, StarsIcon, BookOpenCheck } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./ui/dropdown-menu";
 import { checkUser } from "@/lib/checkUser";
 
-const Header = async() => {
+const Header = async () => {
   await checkUser();//everytime it checks if user exists in db else creates new user
 
 
@@ -69,6 +69,15 @@ const Header = async() => {
                   </span>
                 </Link></DropdownMenuItem>
 
+{/*added custom quiz section in growth tools dropdown menu*/}
+                <DropdownMenuItem>
+                  <Link href={"/quiz"} className="flex items-center gap-2">
+                    <BookOpenCheck className="h-4 w-4" />
+                    <span>Custom Quiz</span>
+                  </Link>
+                </DropdownMenuItem>
+
+
               </DropdownMenuContent>
             </DropdownMenu>
           </SignedIn>
@@ -78,14 +87,14 @@ const Header = async() => {
             </SignInButton>
           </SignedOut>
           <SignedIn>
-            <UserButton 
-            appearance={{
-              elements:{ //increasing user circle sign in button
-                avatarBox:"w-10 h-10" ,
-                userButtonPopoverCard:"shadow-x1",
-                userPreviewMainIdentifier: "font-semibold",
-              },
-            }}
+            <UserButton
+              appearance={{
+                elements: { //increasing user circle sign in button
+                  avatarBox: "w-10 h-10",
+                  userButtonPopoverCard: "shadow-x1",
+                  userPreviewMainIdentifier: "font-semibold",
+                },
+              }}
             />
           </SignedIn>
         </div>
