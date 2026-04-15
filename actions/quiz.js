@@ -7,6 +7,23 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
+async function generateWithRetry(prompt, retries = 3) {
+  for (let i = 0; i < retries; i++) {
+    try {
+      const result = await model.generateContent(prompt);
+      return result;
+    } catch (error) {
+      if (error.status === 503 && i < retries - 1) {
+        const wait = 2000 * (i + 1);
+        console.log(`503 - retrying in ${wait}ms... (attempt ${i + 2})`);
+        await new Promise((res) => setTimeout(res, wait));
+        continue;
+      }
+      throw error;
+    }
+  }
+}
+
 export async function generateCustomQuiz({ language, topic, difficulty, numQuestions }) {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
@@ -36,7 +53,7 @@ export async function generateCustomQuiz({ language, topic, difficulty, numQuest
   `;
 
   try {
-    const result = await model.generateContent(prompt);
+    const result = await generateWithRetry(prompt);
     const response = result.response;
     const text = response.text();
     const cleanedText = text.replace(/```(?:json)?\n?/g, "").trim();
@@ -88,7 +105,7 @@ export async function saveCustomQuizResult(questions, answers, score, meta) {
     `;
 
     try {
-      const tipResult = await model.generateContent(improvementPrompt);
+      const tipResult = await generateWithRetry(improvementPrompt);
       improvementTip = tipResult.response.text().trim();
     } catch (error) {
       console.error("Error generating improvement tip:", error);

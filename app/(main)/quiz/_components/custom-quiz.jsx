@@ -16,8 +16,7 @@ import { BarLoader } from "react-spinners";
 export default function CustomQuiz({ quizData, meta, onReset }) {
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState(new Array(quizData.length).fill(null));
-  const [showExplanation, setShowExplanation] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(quizData.length * 60); // 1 min per question
+  const [timeLeft, setTimeLeft] = useState(quizData.length * 60);
   const timerRef = useRef(null);
 
   const {
@@ -45,7 +44,6 @@ export default function CustomQuiz({ quizData, meta, onReset }) {
     }
   };
 
-  // Countdown timer
   useEffect(() => {
     timerRef.current = setInterval(() => {
       setTimeLeft((prev) => {
@@ -75,7 +73,6 @@ export default function CustomQuiz({ quizData, meta, onReset }) {
   const handleNext = () => {
     if (currentQuestion < quizData.length - 1) {
       setCurrentQuestion(currentQuestion + 1);
-      setShowExplanation(false);
     } else {
       finishQuiz();
     }
@@ -118,28 +115,11 @@ export default function CustomQuiz({ quizData, meta, onReset }) {
             </div>
           ))}
         </RadioGroup>
-
-        {showExplanation && (
-          <div className="mt-4 p-4 bg-muted rounded-lg">
-            <p className="font-medium">Explanation:</p>
-            <p className="text-muted-foreground">{question.explanation}</p>
-          </div>
-        )}
       </CardContent>
-      <CardFooter className="flex justify-between">
-        {!showExplanation && (
-          <Button
-            onClick={() => setShowExplanation(true)}
-            variant="outline"
-            disabled={!answers[currentQuestion]}
-          >
-            Show Explanation
-          </Button>
-        )}
+      <CardFooter className="flex justify-end">
         <Button
           onClick={handleNext}
           disabled={!answers[currentQuestion] || savingResult}
-          className="ml-auto"
         >
           {savingResult && <BarLoader width={"100%"} color="gray" />}
           {currentQuestion < quizData.length - 1 ? "Next Question" : "Finish Quiz"}
