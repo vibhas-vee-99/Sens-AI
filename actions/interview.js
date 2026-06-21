@@ -2,11 +2,12 @@
 
 import { db } from "@/lib/prisma";
 import { auth } from "@clerk/nextjs/server";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import Groq from "groq-sdk";
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+
 export async function generateQuiz(questionCount = 20) {
+  questionCount = Number(questionCount) || 20;
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
 
@@ -31,19 +32,20 @@ export async function generateQuiz(questionCount = 20) {
   `;
 
   try {
-    // Run all batches in parallel
     const batches = await Promise.all(
       Array.from({ length: numBatches }, (_, i) => {
         const count = i === numBatches - 1
           ? questionCount - i * batchSize
           : batchSize;
-        return model.generateContent(prompt(count));
+        return groq.chat.completions.create({
+          model: "llama-3.3-70b-versatile",
+          messages: [{ role: "user", content: prompt(count) }],
+        });
       })
     );
 
-    // Parse and merge all batches
     const allQuestions = batches.flatMap((result) => {
-      const text = result.response.text();
+      const text = result.choices[0]?.message?.content || "";
       const cleaned = text.replace(/```(?:json)?\n?/g, "").trim();
       return JSON.parse(cleaned).questions;
     });
@@ -73,10 +75,8 @@ export async function saveQuizResult(questions, answers, score) {
     explanation: q.explanation,
   }));
 
-  // Get wrong answers
   const wrongAnswers = questionResults.filter((q) => !q.isCorrect);
 
-  // Only generate improvement tips if there are wrong answers
   let improvementTip = null;
   if (wrongAnswers.length > 0) {
     const wrongQuestionsText = wrongAnswers
@@ -98,13 +98,13 @@ export async function saveQuizResult(questions, answers, score) {
     `;
 
     try {
-      const tipResult = await model.generateContent(improvementPrompt);
-
-      improvementTip = tipResult.response.text().trim();
-      console.log(improvementTip);
+      const tipResult = await groq.chat.completions.create({
+        model: "llama-3.3-70b-versatile",
+        messages: [{ role: "user", content: improvementPrompt }],
+      });
+      improvementTip = tipResult.choices[0]?.message?.content.trim();
     } catch (error) {
       console.error("Error generating improvement tip:", error);
-      // Continue without improvement tip if generation fails
     }
   }
 
@@ -138,12 +138,8 @@ export async function getAssessments() {
 
   try {
     const assessments = await db.assessment.findMany({
-      where: {
-        userId: user.id,
-      },
-      orderBy: {
-        createdAt: "asc",
-      },
+      where: { userId: user.id },
+      orderBy: { createdAt: "asc" },
     });
 
     return assessments;

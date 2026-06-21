@@ -90,7 +90,7 @@ export default function CustomQuiz({ quizData, meta, onReset }) {
   const isLowTime = timeLeft <= 60;
 
   return (
-    <Card className="mx-2">
+    <Card className="max-w-2xl mx-auto">
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle>
@@ -116,7 +116,7 @@ export default function CustomQuiz({ quizData, meta, onReset }) {
           ))}
         </RadioGroup>
       </CardContent>
-      <CardFooter className="flex justify-end">
+      <CardFooter className="flex justify-center">
         <Button
           onClick={handleNext}
           disabled={!answers[currentQuestion] || savingResult}

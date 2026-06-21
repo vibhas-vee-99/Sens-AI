@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -21,6 +21,8 @@ export default function Quiz() {
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState([]);
   const [showExplanation, setShowExplanation] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(null);
+  const timerRef = useRef(null);
 
   const {
     loading: generatingQuiz,
@@ -38,8 +40,27 @@ export default function Quiz() {
   useEffect(() => {
     if (quizData) {
       setAnswers(new Array(quizData.length).fill(null));
+      setTimeLeft(20 * 60); // 20 minutes
     }
   }, [quizData]);
+
+  // Timer countdown
+  useEffect(() => {
+    if (timeLeft === null) return;
+    if (timeLeft <= 0) {
+      toast.error("Time's up! Auto-submitting...");
+      finishQuiz();
+      return;
+    }
+    timerRef.current = setTimeout(() => setTimeLeft((t) => t - 1), 1000);
+    return () => clearTimeout(timerRef.current);
+  }, [timeLeft]);
+
+  const formatTime = (secs) => {
+    const m = Math.floor(secs / 60).toString().padStart(2, "0");
+    const s = (secs % 60).toString().padStart(2, "0");
+    return `${m}:${s}`;
+  };
 
   const handleAnswer = (answer) => {
     const newAnswers = [...answers];
@@ -59,14 +80,14 @@ export default function Quiz() {
   const calculateScore = () => {
     let correct = 0;
     answers.forEach((answer, index) => {
-      if (answer === quizData[index].correctAnswer) {
-        correct++;
-      }
+      if (answer === quizData[index].correctAnswer) correct++;
     });
     return (correct / quizData.length) * 100;
   };
 
   const finishQuiz = async () => {
+    clearTimeout(timerRef.current);
+    setTimeLeft(null);
     const score = calculateScore();
     try {
       await saveQuizResultFn(quizData, answers, score);
@@ -80,7 +101,8 @@ export default function Quiz() {
     setCurrentQuestion(0);
     setAnswers([]);
     setShowExplanation(false);
-    generateQuizFn();
+    setTimeLeft(null);
+    generateQuizFn(20);
     setResultData(null);
   };
 
@@ -88,7 +110,6 @@ export default function Quiz() {
     return <BarLoader className="mt-4" width={"100%"} color="gray" />;
   }
 
-  // Show results if quiz is completed
   if (resultData) {
     return (
       <div className="mx-2">
@@ -106,11 +127,11 @@ export default function Quiz() {
         <CardContent>
           <p className="text-muted-foreground">
             This quiz contains 20 questions specific to your industry and
-            skills. Take your time and choose the best answer for each question.
+            skills. You have 20 minutes to complete it.
           </p>
         </CardContent>
         <CardFooter>
-          <Button onClick={generateQuizFn} className="w-full">
+          <Button onClick={() => generateQuizFn(20)} className="w-full">
             Start Quiz
           </Button>
         </CardFooter>
@@ -123,9 +144,14 @@ export default function Quiz() {
   return (
     <Card className="mx-2">
       <CardHeader>
-        <CardTitle>
-          Question {currentQuestion + 1} of {quizData.length}
-        </CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle>
+            Question {currentQuestion + 1} of {quizData.length}
+          </CardTitle>
+          <span className={`text-lg font-mono font-bold ${timeLeft <= 60 ? "text-red-500" : "text-muted-foreground"}`}>
+            ⏱ {formatTime(timeLeft)}
+          </span>
+        </div>
       </CardHeader>
       <CardContent className="space-y-4">
         <p className="text-lg font-medium">{question.question}</p>
@@ -164,12 +190,8 @@ export default function Quiz() {
           disabled={!answers[currentQuestion] || savingResult}
           className="ml-auto"
         >
-          {savingResult && (
-            <BarLoader className="mt-4" width={"100%"} color="gray" />
-          )}
-          {currentQuestion < quizData.length - 1
-            ? "Next Question"
-            : "Finish Quiz"}
+          {savingResult && <BarLoader className="mt-4" width={"100%"} color="gray" />}
+          {currentQuestion < quizData.length - 1 ? "Next Question" : "Finish Quiz"}
         </Button>
       </CardFooter>
     </Card>

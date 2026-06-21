@@ -6,6 +6,12 @@ import QuizList from "./_components/quiz-list";
 export default async function InterviewPrepPage() {
   const assessments = await getAssessments();
 
+  const serialized = assessments.map(a => ({
+    ...a,
+    createdAt: a.createdAt.toISOString(),
+    updatedAt: a.updatedAt?.toISOString(),
+  }));
+
   return (
     <div>
       <div className="flex items-center justify-between mb-5">
@@ -14,9 +20,9 @@ export default async function InterviewPrepPage() {
         </h1>
       </div>
       <div className="space-y-6">
-        <StatsCards assessments={assessments} />
-        <PerformanceChart assessments={assessments} />
-        <QuizList assessments={assessments} />
+        <StatsCards assessments={serialized} />
+        <PerformanceChart assessments={serialized} />
+        <QuizList assessments={serialized} />
       </div>
     </div>
   );
